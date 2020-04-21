@@ -1,0 +1,42 @@
+- name: "Ansible para configurar VM"
+  hosts: local
+  gather_facts: False
+  vars_files:
+    - vars/aws_credentials.yml
+
+  vars:
+    projeto: devops
+    AWS_access_key: "{{ AWSAccessKeyId }}"
+    AWS_secret_key: "{{ AWSSecretKey }}"
+    security_group: "{{ projeto }}-ws-sg"
+    KeyPairDev: "{{ projeto }}-key"
+    region: us-east-1
+
+  tasks:
+    - name: Create empty buckets for backup
+      s3_bucket:
+        aws_access_key: "{{ AWS_access_key }}"
+        aws_secret_key: "{{ AWS_secret_key }}"          
+        name: '{{ item }}'
+        region: "{{ region }}"
+        state: present
+        policy:
+          Version: '2012-10-17'
+          Statement: 
+            - Effect: Allow
+              Principal: 
+                'AWS' : '*'
+              Action: [
+                  's3:ListBucket',
+                  's3:DeleteObject',
+                  's3:GetObject',
+                  's3:PutObject',
+                  's3:PutObjectAcl'
+              ]
+              Resource: [
+                'arn:aws:s3:::{{item}}/*',
+                'arn:aws:s3:::{{item}}'
+              ]
+      loop:
+        - digitalhouse-desligaar-homolog
+        - digitalhouse-desligaar-producao
